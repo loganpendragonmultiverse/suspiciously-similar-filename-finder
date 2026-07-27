@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import difflib
+import hashlib
 import json
 import re
 from itertools import combinations
@@ -22,6 +23,9 @@ def _filename_similarity(data: dict[str, Any]) -> dict[str, Any]:
     if not root.is_dir():
         raise ValueError("root must be an existing directory")
     threshold = float(data.get("threshold", 0.72))
+    if not 0 <= threshold <= 1:
+        raise ValueError("threshold must be between 0 and 1")
+    cross_directories = bool(data.get("cross_directories", False))
     files = [
         path for path in sorted(root.rglob("*")) if path.is_file() and ".git" not in path.parts
     ]
@@ -34,14 +38,18 @@ def _filename_similarity(data: dict[str, Any]) -> dict[str, Any]:
         ).strip(" -_()")
         normalized[path] = re.sub("[^a-z0-9]+", " ", stem).strip()
     groups = []
+    fingerprints: dict[Path, str] = {}
     for left, right in combinations(files, 2):
-        if left.parent != right.parent:
+        if not cross_directories and left.parent != right.parent:
             continue
         score = difflib.SequenceMatcher(None, normalized[left], normalized[right]).ratio()
         variant_marker = (
             normalized[left] == normalized[right] and left.name.casefold() != right.name.casefold()
         )
         if score >= threshold or variant_marker:
+            for path in (left, right):
+                fingerprints.setdefault(path, hashlib.sha256(path.read_bytes()).hexdigest())
+            exact_content = fingerprints[left] == fingerprints[right]
             groups.append(
                 {
                     "files": [
@@ -50,10 +58,19 @@ def _filename_similarity(data: dict[str, Any]) -> dict[str, Any]:
                     ],
                     "similarity": round(score, 3),
                     "normalized": [normalized[left], normalized[right]],
+                    "exact_content": exact_content,
+                    "reason": "exact content"
+                    if exact_content
+                    else "variant marker"
+                    if variant_marker
+                    else "similar name",
                 }
             )
     return {
         "files_scanned": len(files),
+        "threshold": threshold,
+        "cross_directories": cross_directories,
+        "exact_content_pairs": sum(item["exact_content"] for item in groups),
         "pairs": sorted(groups, key=lambda item: (-item["similarity"], item["files"])),
     }
 

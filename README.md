@@ -12,7 +12,7 @@ similar-filenames examples/sample.json
 similar-filenames examples/sample.json --format json --output report.json
 ```
 
-The example documents the v1 input shape. Existing report files are never overwritten. Source inputs are read-only except where the documented purpose explicitly creates a new output artifact.
+The example documents the input shape. Version 1.1 hashes candidate pairs to distinguish byte-identical content from name-only similarity, validates the threshold, and supports opt-in `cross_directories` comparison. Existing report files are never overwritten. Source inputs are read-only except where the documented purpose explicitly creates a new output artifact.
 
 ## Privacy and platforms
 

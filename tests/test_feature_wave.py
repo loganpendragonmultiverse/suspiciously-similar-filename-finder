@@ -98,3 +98,26 @@ def test_streaming_large_and_growth_during_open(tmp_path, monkeypatch):
 
     monkeypatch.setattr(Path, "open", growing)
     assert _fingerprint(path, None, None)[1] == "changed"
+
+
+def test_stat_and_fstat_ctime_semantics_can_differ(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    from similar_filename_finder import core
+
+    path = tmp_path / "report"
+    path.write_bytes(b"content")
+    real = core.os.fstat
+
+    def alternate_ctime(fd):
+        info = real(fd)
+        return SimpleNamespace(
+            st_dev=info.st_dev,
+            st_ino=info.st_ino,
+            st_size=info.st_size,
+            st_mtime_ns=info.st_mtime_ns,
+            st_ctime_ns=info.st_ctime_ns + 1000000,
+        )
+
+    monkeypatch.setattr(core.os, "fstat", alternate_ctime)
+    assert core._fingerprint(path, None, None)[1] == "hashed"

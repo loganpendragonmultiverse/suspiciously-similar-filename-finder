@@ -153,7 +153,10 @@ def _fingerprint(
             return None, "total_budget", 0, None
         result = hashlib.sha256()
         with path.open("rb") as handle:
-            if _signature(os.fstat(handle.fileno())) != before:
+            opened = _signature(os.fstat(handle.fileno()))
+            # Windows stat/fstat may expose different ctime semantics (CPython #157671).
+            # Compare ctime only within the same API, retaining identity/size/mtime cross-checks.
+            if opened[:4] != before[:4]:
                 return None, "changed", 0, None
             while consumed < size:
                 block = handle.read(min(1024 * 1024, size - consumed))
@@ -161,7 +164,7 @@ def _fingerprint(
                     return None, "changed", consumed, None
                 consumed += len(block)
                 result.update(block)
-            if _signature(os.fstat(handle.fileno())) != before or _signature(path.stat()) != before:
+            if _signature(os.fstat(handle.fileno())) != opened or _signature(path.stat()) != before:
                 return None, "changed", consumed, None
         return result.hexdigest(), "hashed", consumed, before
     except OSError:

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0 - Unreleased
+
+- Stream candidate hashes with optional byte budgets and explicit unverified classifications.
+
 ## 1.1.0 - 2026-07-27
 
 - Added SHA-256 exact-content classification for candidate filename pairs.

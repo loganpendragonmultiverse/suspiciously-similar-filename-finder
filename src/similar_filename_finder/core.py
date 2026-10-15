@@ -158,12 +158,23 @@ def _fingerprint(
             # Compare ctime only within the same API, retaining identity/size/mtime cross-checks.
             if opened[:4] != before[:4]:
                 return None, "changed", 0, None
-            while consumed < size:
-                block = handle.read(min(1024 * 1024, size - consumed))
+            while True:
+                allowance = 1024 * 1024
+                if per_file is not None:
+                    if consumed >= per_file:
+                        return None, "per_file_budget", consumed, None
+                    allowance = min(allowance, per_file - consumed)
+                if remaining is not None:
+                    if consumed >= remaining:
+                        return None, "total_budget", consumed, None
+                    allowance = min(allowance, remaining - consumed)
+                block = handle.read(allowance)
                 if not block:
-                    return None, "changed", consumed, None
+                    break
                 consumed += len(block)
                 result.update(block)
+            if consumed != size:
+                return None, "changed", consumed, None
             if _signature(os.fstat(handle.fileno())) != opened or _signature(path.stat()) != before:
                 return None, "changed", consumed, None
         return result.hexdigest(), "hashed", consumed, before

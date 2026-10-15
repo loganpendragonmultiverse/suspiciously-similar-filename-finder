@@ -36,7 +36,7 @@ def test_budgets_and_different_content(tmp_path):
     assert limited["hash_bytes_read"] == 0
     assert all(pair["exact_content"] is None for pair in limited["pairs"])
     assert all(pair["content_status"] == "unverified" for pair in limited["pairs"])
-    total = analyze({**data, "max_hash_bytes_total": 8})
+    total = analyze({**data, "max_hash_bytes_total": 9})
     assert total["hash_bytes_read"] == 8
     assert total["exact_content_pairs"] == 1
     assert any("total_budget" in pair["hash_status"] for pair in total["pairs"])

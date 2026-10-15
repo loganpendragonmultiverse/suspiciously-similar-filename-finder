@@ -5,3 +5,5 @@ Install `.[dev]` in an isolated environment and run `ruff format --check .`, `ru
 The sample input uses the current directory. Tests override it with temporary files so development environments and build outputs never become scan fixtures.
 
 Windows stat/fstat may disagree on ctime semantics ([CPython #157671](https://github.com/python/cpython/issues/157671)). The regression simulates that difference while retaining descriptor/path identity, size, mtime and same-API ctime checks.
+
+Review-hold regressions cover synthetic zero-stat-size readers, safe small Linux pseudofiles where available, empty and exact-limit EOF behavior, total/per-file byte accounting, and candidate-pair first-encounter budget order.

@@ -38,7 +38,7 @@ The project is feature-complete for its documented v1 scope. Maintenance focuses
 Part of the [Logan Pendragon Forge open-source collection](https://www.loganpendragonforge.com/open-source/). Licensed under the [MIT License](LICENSE).
 
 
-## 1.2.0 candidate
+## Version 1.2.0
 
 JSON input accepts optional `max_hash_bytes_per_file` and `max_hash_bytes_total` non-negative integer byte limits. Omitted or null limits preserve unlimited hashing. For example:
 

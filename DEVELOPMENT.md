@@ -7,7 +7,7 @@ Version 1.1 adds exact-content evidence for candidate pairs and opt-in cross-dir
 Preserve deterministic, source-safe behavior and the interpretation boundary documented in the README. Every feature release must update tests, version metadata, changelog, README claims, repository metadata, release assets, and the Forge catalog together.
 
 
-## 1.2.0 candidate
+## Version 1.2.0
 
 JSON input accepts optional `max_hash_bytes_per_file` and `max_hash_bytes_total` non-negative integer byte limits. Omitted or null limits preserve unlimited hashing. For example:
 

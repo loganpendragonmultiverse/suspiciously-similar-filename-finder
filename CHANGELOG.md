@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0
+## 1.2.0 - 2026-10-16
 
 - Require observed EOF and consistent metadata before verified content claims; zero-size virtual sources and exact-budget exhaustion remain unverified. Clarify first-encounter budget allocation.
 

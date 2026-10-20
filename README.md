@@ -50,3 +50,19 @@ Candidate files are streamed in chunks of at most 1 MiB, hashed once per scan, a
 
 
 A digest is verified only after the stream returns EOF and the bytes read agree with stable metadata. Virtual files whose content disagrees with st_size remain unverified. A zero-byte budget cannot verify even an empty file. If a limit is exhausted exactly at the observed size, the file remains unverified because checking EOF could consume another byte. Leave at least one byte of available allowance for that EOF check; an EOF read consumes zero bytes. Actual content bytes, including bytes from an unverified attempt, are charged to the budget.
+
+## Filename and discovery boundaries
+
+Version 1.2.1 preserves Unicode letters and digits after NFKC normalization and
+case folding. Names reduced entirely to symbols or version markers fall back to
+their normalized original stem, avoiding empty-string matches. This is a name
+heuristic, not language understanding or confusable-character detection.
+`threshold` requires a finite number from 0 to 1; `cross_directories` requires a
+JSON boolean. Failed directory discovery exits with status 2 instead of silently
+returning a partial inventory. .git branches are pruned before reading. Directory
+symlinks are not traversed; file symlinks retain the existing bounded hashing
+behavior, including the documented virtual-file uncertainty checks.
+
+Report output uses an explicit existing-file/symlink guard and exclusive file
+creation. This protects ordinary existing destinations and concurrent regular
+file creation; it is not a defense against hostile concurrent filesystem changes.

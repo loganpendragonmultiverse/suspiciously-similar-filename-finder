@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1 — 2026-10-20
+
+- Preserve Unicode letters and canonical equivalents in filename comparison; unrelated non-Latin or symbol names no longer collapse to empty strings.
+- Validate numeric thresholds and boolean cross-directory controls without coercion.
+- Prune .git before directory discovery and fail unreadable discovery explicitly.
+- Create reports exclusively with an explicit dangling-link guard; retain all existing hash-budget and changing-file checks.
+
 ## 1.2.0 - 2026-10-16
 
 - Require observed EOF and consistent metadata before verified content claims; zero-size virtual sources and exact-budget exhaustion remain unverified. Clarify first-encounter budget allocation.

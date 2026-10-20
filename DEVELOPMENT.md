@@ -19,3 +19,7 @@ Candidate files are streamed in chunks of at most 1 MiB, hashed once per scan, a
 
 
 A digest is verified only after the stream returns EOF and the bytes read agree with stable metadata. Virtual files whose content disagrees with st_size remain unverified. A zero-byte budget cannot verify even an empty file. If a limit is exhausted exactly at the observed size, the file remains unverified because checking EOF could consume another byte. Leave at least one byte of available allowance for that EOF check; an EOF read consumes zero bytes. Actual content bytes, including bytes from an unverified attempt, are charged to the budget.
+
+The 1.2.1 audit corrects Unicode empty-name matches, typed controls, discovery
+failures and report creation. Keep every existing hash-budget, EOF, stat/fstat and
+changing-file regression and the 90% branch-coverage gate.

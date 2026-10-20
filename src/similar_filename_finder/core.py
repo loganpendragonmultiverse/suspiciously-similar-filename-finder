@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+import unicodedata
 from itertools import combinations
 from pathlib import Path
 from typing import Any
@@ -12,32 +13,53 @@ from typing import Any
 PROJECT = "suspiciously-similar-filename-finder"
 
 
-def _require(data: dict[str, Any], key: str) -> Any:
+def _require(data: dict[str, Any], key: str) -> str:
     value = data.get(key)
     if value is None or value == "" or value == []:
         raise ValueError(f"{key} is required")
+    if not isinstance(value, str):
+        raise TypeError(f"{key} must be text")
     return value
 
 
 def _filename_similarity(data: dict[str, Any]) -> dict[str, Any]:
-    root = Path(_require(data, "root")).resolve()
+    try:
+        root = Path(_require(data, "root")).resolve()
+    except RuntimeError as exc:
+        raise ValueError("root cannot be resolved") from exc
     if not root.is_dir():
         raise ValueError("root must be an existing directory")
-    threshold = float(data.get("threshold", 0.72))
-    if not 0 <= threshold <= 1:
+    threshold_value = data.get("threshold", 0.72)
+    if type(threshold_value) not in (int, float) or not 0 <= threshold_value <= 1:
         raise ValueError("threshold must be between 0 and 1")
-    cross_directories = bool(data.get("cross_directories", False))
-    files = [
-        path for path in sorted(root.rglob("*")) if path.is_file() and ".git" not in path.parts
-    ]
+    threshold = float(threshold_value)
+    cross_directories = data.get("cross_directories", False)
+    if type(cross_directories) is not bool:
+        raise TypeError("cross_directories must be boolean")
+    files = []
+    pending = [root]
+    while pending:
+        directory = pending.pop()
+        with os.scandir(directory) as iterator:
+            for entry in iterator:
+                if entry.name == ".git":
+                    continue
+                if entry.is_file():
+                    files.append(directory / entry.name)
+                elif entry.is_dir(follow_symlinks=False):
+                    pending.append(directory / entry.name)
+    files.sort()
     normalized = {}
     for path in files:
         stem = re.sub(
             "\\b(final|copy|backup|old|new|rev|version|v)\\b|\\(\\d+\\)|[-_ ]?\\d+$",
             "",
-            path.stem.casefold(),
+            unicodedata.normalize("NFKC", path.stem).casefold(),
         ).strip(" -_()")
-        normalized[path] = re.sub("[^a-z0-9]+", " ", stem).strip()
+        normalized[path] = (
+            re.sub(r"[\W_]+", " ", stem).strip()
+            or unicodedata.normalize("NFKC", path.stem).casefold()
+        )
     groups: list[dict[str, Any]] = []
     per_file = _budget(data, "max_hash_bytes_per_file")
     remaining = _budget(data, "max_hash_bytes_total")
@@ -105,6 +127,8 @@ def _filename_similarity(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def analyze(data: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(data, dict):
+        raise TypeError("input must be a JSON object")
     return {"version": 1, "project": PROJECT, **_filename_similarity(data)}
 
 
